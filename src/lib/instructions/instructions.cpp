@@ -79,21 +79,29 @@ void DisplayInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int
     for (uint8_t row = 0; row < n_rows; ++row) {
         uint8_t sprite_byte = memory(chip8)[I(chip8) + row];
         for (uint8_t col = 0; col < 8; ++col) {
-            if ((sprite_byte & (0x80 >> col)) != 0) { // Check if the bit is set
+            if ((sprite_byte & (0x80 >> col)) != 0) {
                 uint16_t x = (x_corr + col) % frame_width;
                 uint16_t y = (y_corr + row) % frame_height;
                 uint32_t& pixel = frame_buffer[y * frame_width + x];
-                if (pixel != 0) {
-                    vf = 1; // Collision detected
+                if (pixel != 0x00000000u) {
+                    vf = 1;
                 }
-                pixel ^= 0xFFFFFFFF; // Toggle pixel (assuming white on black)
+                pixel ^= 0xFFFFFFFFu;
             }
         }
     }
+    V(chip8)[0xF] = vf;
 }
 
-void SkipIfKeyInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {}
 
-void TimerInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {}
+void SkipIfKPInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {}
+
+void SkipIfNotKPInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {}
+
+void TimerSetVXInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {}
+
+void TimerSetDelayInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {}
+
+void TimerSetSoundInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {}
 
 void UnknownInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {} 

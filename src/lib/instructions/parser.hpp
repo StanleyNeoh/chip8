@@ -2,7 +2,7 @@
 #define SRC_LIB_INSTRUCTIONS_PARSER_HPP
 
 #include <memory>
-#include "instruction_grp.hpp"
+#include "instructions.hpp"
 
 #include <ios>
 #include <iostream>
@@ -52,25 +52,35 @@ public:
     }
 
     static std::unique_ptr<Inst> parse(inst_t op) {
-        switch (op & 0xF000) {
-            case MachineInstGrp::grp:     return MachineInstGrp(op).parse();
-            case JumpInstGrp::grp:        return JumpInstGrp(op).parse();
-            case SubroutInstGrp::grp:     return SubroutInstGrp(op).parse();
-            case SkipConstEqInstGrp::grp: return SkipConstEqInstGrp(op).parse();
-            case SkipConstNeqInstGrp::grp:return SkipConstNeqInstGrp(op).parse();
-            case SkipRegEqInstGrp::grp:   return SkipRegEqInstGrp(op).parse();
-            case SkipRegNeqInstGrp::grp:  return SkipRegNeqInstGrp(op).parse();
-            case SetConstInstGrp::grp:    return SetConstInstGrp(op).parse();
-            case AddConstInstGrp::grp:    return AddConstInstGrp(op).parse();
-            case ArithInstGrp::grp:       return ArithInstGrp(op).parse();
-            case SetIndexInstGrp::grp:    return SetIndexInstGrp(op).parse();
-            case JumpOffsetInstGrp::grp:  return JumpOffsetInstGrp(op).parse();
-            case RandInstGrp::grp:        return RandInstGrp(op).parse();
-            case DisplayInstGrp::grp:     return DisplayInstGrp(op).parse();
-            case SkipIfKeyInstGrp::grp:   return SkipIfKeyInstGrp(op).parse();
-            case TimerInstGrp::grp:       return TimerInstGrp(op).parse();
-            default:                     return UnknownInstGrp(op).parse();
-        }
+        if (ClearScreen::match(op)) return std::make_unique<ClearScreen>(op);
+        else if (ReturnInst::match(op)) return std::make_unique<ReturnInst>(op);
+        else if (JumpInst::match(op)) return std::make_unique<JumpInst>(op);
+        else if (SubroutInst::match(op)) return std::make_unique<SubroutInst>(op);
+        else if (SkipConstEqInst::match(op)) return std::make_unique<SkipConstEqInst>(op);
+        else if (SkipConstNeqInst::match(op)) return std::make_unique<SkipConstNeqInst>(op);
+        else if (SkipRegEqInst::match(op)) return std::make_unique<SkipRegEqInst>(op);
+        else if (SkipRegNeqInst::match(op)) return std::make_unique<SkipRegNeqInst>(op);
+        else if (SetConstInst::match(op)) return std::make_unique<SetConstInst>(op);
+        else if (AddConstInst::match(op)) return std::make_unique<AddConstInst>(op);
+        else if (LoadReg::match(op)) return std::make_unique<LoadReg>(op);
+        else if (OrReg::match(op)) return std::make_unique<OrReg>(op);
+        else if (AndReg::match(op)) return std::make_unique<AndReg>(op);
+        else if (XorReg::match(op)) return std::make_unique<XorReg>(op);
+        else if (AddReg::match(op)) return std::make_unique<AddReg>(op);
+        else if (SubReg::match(op)) return std::make_unique<SubReg>(op);
+        else if (ShiftRightInst::match(op)) return std::make_unique<ShiftRightInst>(op);
+        else if (SubNReg::match(op)) return std::make_unique<SubNReg>(op);
+        else if (ShiftLeftInst::match(op)) return std::make_unique<ShiftLeftInst>(op);
+        else if (SetIndexInst::match(op)) return std::make_unique<SetIndexInst>(op);
+        else if (JumpOffsetInst::match(op)) return std::make_unique<JumpOffsetInst>(op);
+        else if (RandInst::match(op)) return std::make_unique<RandInst>(op);
+        else if (DisplayInst::match(op)) return std::make_unique<DisplayInst>(op);
+        else if (SkipIfKPInst::match(op)) return std::make_unique<SkipIfKPInst>(op);
+        else if (SkipIfNotKPInst::match(op)) return std::make_unique<SkipIfNotKPInst>(op);
+        else if (TimerSetVXInst::match(op)) return std::make_unique<TimerSetVXInst>(op);
+        else if (TimerSetDelayInst::match(op)) return std::make_unique<TimerSetDelayInst>(op);
+        else if (TimerSetSoundInst::match(op)) return std::make_unique<TimerSetSoundInst>(op);
+        else return std::make_unique<UnknownInst>(op);
     }
 
     const std::vector<std::unique_ptr<Inst>>& getInstructions() const {
@@ -82,8 +92,11 @@ public:
 
 std::ostream& operator<<(std::ostream& out, const Chip8Parser& parser) {
     out << "=== " << parser.filename << " ===\n";
-    for (const auto& inst_ptr: parser.getInstructions()) {
-        out << std::hex << (inst_ptr->inst) << ": "
+    const std::vector<std::unique_ptr<Inst>>& insts = parser.getInstructions();
+    for (int i = 0; i < insts.size(); i++) {
+        const std::unique_ptr<Inst>& inst_ptr = insts[i];
+        out << fmt("[%s, addr: %s] ", i, hex(0x200 + i * 2, 4))
+            << std::hex << (inst_ptr->inst) << ": "
             << inst_ptr->cmd() << " "
             << inst_ptr->arg() << " -- "
             << inst_ptr->desc() << "\n";
