@@ -89,18 +89,21 @@ void OrReg::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame
     uint8_t X = (inst >> 8) & 0x0F;
     uint8_t Y = (inst >> 4) & 0x0F;
     V(chip8)[X] |= V(chip8)[Y];
+    V(chip8)[0xF] = 0;
 }
 
 void AndReg::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) {
     uint8_t X = (inst >> 8) & 0x0F;
     uint8_t Y = (inst >> 4) & 0x0F;
     V(chip8)[X] &= V(chip8)[Y];
+    V(chip8)[0xF] = 0;
 }
 
 void XorReg::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) {
     uint8_t X = (inst >> 8) & 0x0F;
     uint8_t Y = (inst >> 4) & 0x0F;
     V(chip8)[X] ^= V(chip8)[Y];
+    V(chip8)[0xF] = 0;
 }
 
 void AddReg::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) {
@@ -254,14 +257,14 @@ void BinCodedDecConvInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buf
 void StoreMemInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) {
     uint8_t X = (inst >> 8) & 0x0F;
     for (uint8_t i = 0; i <= X; ++i) {
-        memory(chip8)[I(chip8) + i] = V(chip8)[i];
+        memory(chip8)[I(chip8)++] = V(chip8)[i];
     }
 }
 
 void LoadMemInst::execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) {
     uint8_t X = (inst >> 8) & 0x0F;
     for (uint8_t i = 0; i <= X; ++i) {
-        V(chip8)[i] = memory(chip8)[I(chip8) + i];
+        V(chip8)[i] = memory(chip8)[I(chip8)++];
     }
 }
 
