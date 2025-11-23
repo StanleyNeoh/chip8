@@ -9,6 +9,14 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include "../chip8/chip8.hpp"
+#include <unordered_map>
+
+const std::unordered_map<uint8_t, uint8_t> key_map = {
+    {SDLK_X, 0x0}, {SDLK_1, 0x1}, {SDLK_2, 0x2}, {SDLK_3, 0x3},
+    {SDLK_Q, 0x4}, {SDLK_W, 0x5}, {SDLK_E, 0x6}, {SDLK_A, 0x7},
+    {SDLK_S, 0x8}, {SDLK_D, 0x9}, {SDLK_Z, 0xA}, {SDLK_C, 0xB},
+    {SDLK_4, 0xC}, {SDLK_R, 0xD}, {SDLK_F, 0xE}, {SDLK_V, 0xF}
+};
 
 class UI {
 private:
@@ -24,6 +32,7 @@ private:
     int width = 0;
     int height = 0;
     int run_n_steps = 0;
+    uint16_t keydown = 0x0000;
 
 public:
     UI(const UI&) = delete;
@@ -95,17 +104,31 @@ public:
                         chip8->quit();
                         return false;
                     case SDLK_SPACE:
+                        std::cerr << "Stepping one instruction\n";
                         run_n_steps = 1;
                         break;
                     case SDLK_RETURN:
-                        if (run_n_steps == 0) run_n_steps = -1;
-                        else if (run_n_steps < 0) run_n_steps = 0;
+                        if (run_n_steps == 0) {
+                            std::cerr << "Toggle running\n";
+                            run_n_steps = -1;
+                        } else if (run_n_steps < 0) {
+                            std::cerr << "Pausing execution\n";
+                            run_n_steps = 0;
+                        }
+                        break;
+                    default:
+                        auto it = key_map.find(e.key.key);
+                        if (it != key_map.end()) keydown &= ~(1 << it->second);
                         break;
                 }
             }
+            if (e.type == SDL_EVENT_KEY_DOWN) {
+                auto it = key_map.find(e.key.key);
+                if (it != key_map.end()) keydown |= (1 << it->second);
+            }
         }
         if (run_n_steps != 0) {
-            chip8->step(frame_buffer, width, height);
+            chip8->step(frame_buffer, width, height, keydown);
             run_n_steps -= run_n_steps > 0;
         }
         SDL_Delay(1); // Prevent CPU hogging

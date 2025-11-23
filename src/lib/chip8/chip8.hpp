@@ -33,7 +33,7 @@ public:
     bool finished() const {
         return pc >= rom_end;
     };
-    void step(std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    void step(std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown);
     void quit() {};
 
     void memdump(std::ostream& os = std::cout) const {

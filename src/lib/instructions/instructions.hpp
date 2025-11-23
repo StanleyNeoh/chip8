@@ -20,7 +20,7 @@ public:
     virtual const char* cmd() const { return CMD_UNK; }
     virtual std::string desc() const { return DESC_UNK; }
     virtual std::string arg() const { return ""; }
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) = 0;
     static bool match(inst_t opcode) { return false; }
 
 protected:
@@ -39,7 +39,7 @@ template <typename T>
 class InstTrait: public Inst {
 public:
     InstTrait(inst_t inst): Inst(inst) {}
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) override {
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) {
         std::cerr << static_cast<T*>(this)->cmd() << "(" << static_cast<T*>(this)->arg() << ")" << " instruction execution not implemented.\n";
     }
 
@@ -66,7 +66,7 @@ public:
         return "";
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class ReturnInst: public InstTrait<ReturnInst> {
@@ -88,7 +88,7 @@ public:
         return "";
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class JumpInst: public InstTrait<JumpInst> {
@@ -110,7 +110,7 @@ public:
         return fmt("NNN=%s", hex(inst & 0x0FFF, 3));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class SubroutInst: public InstTrait<SubroutInst> {
@@ -132,7 +132,7 @@ public:
         return fmt("NNN=%s", hex(inst & 0x0FFF, 3));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class SkipConstEqInst: public InstTrait<SkipConstEqInst> {
@@ -154,7 +154,7 @@ public:
         return fmt("X=%s, NN=%s", reg(inst >> 8), hex(inst & 0xFF, 2));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class SkipConstNeqInst: public InstTrait<SkipConstNeqInst> {
@@ -176,7 +176,7 @@ public:
         return fmt("X=%s, NN=%s", reg(inst >> 8), hex(inst & 0xFF, 2));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class SkipRegEqInst: public InstTrait<SkipRegEqInst> {
@@ -198,7 +198,7 @@ public:
         return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class SkipRegNeqInst: public InstTrait<SkipRegNeqInst> {
@@ -220,7 +220,7 @@ public:
         return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class SetConstInst: public InstTrait<SetConstInst> {
@@ -242,7 +242,7 @@ public:
         return fmt("X=%s, NN=%s", reg(inst >> 8), hex(inst & 0xFF, 2));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class AddConstInst: public InstTrait<AddConstInst> {
@@ -264,7 +264,7 @@ public:
         return fmt("X=%s, NN=%s", reg(inst >> 8), hex(inst & 0xFF, 2));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class LoadReg: public InstTrait<LoadReg> {
@@ -286,7 +286,7 @@ public:
         return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class OrReg: public InstTrait<OrReg> {
@@ -308,7 +308,7 @@ public:
         return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class AndReg: public InstTrait<AndReg> {
@@ -330,7 +330,7 @@ public:
         return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class XorReg: public InstTrait<XorReg> {
@@ -352,7 +352,7 @@ public:
         return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class AddReg: public InstTrait<AddReg> {
@@ -374,14 +374,14 @@ public:
         return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
-class SubReg: public InstTrait<SubReg> {
+class SubXY: public InstTrait<SubXY> {
 public:
     static const inst_t mask = 0xF00F;
     static const inst_t op = 0x8005;
-    SubReg(inst_t inst): InstTrait<SubReg>(inst) {}
+    SubXY(inst_t inst): InstTrait<SubXY>(inst) {}
     
     virtual const char* cmd() const override {
         return CMD_SUB;
@@ -395,7 +395,29 @@ public:
         return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
+};
+
+class SubYX: public InstTrait<SubYX> {
+public:
+    static const inst_t mask = 0xF00F;
+    static const inst_t op = 0x8007;
+
+    SubYX(inst_t inst): InstTrait<SubYX>(inst) {}
+    
+    virtual const char* cmd() const override {
+        return CMD_SUBN;
+    }
+    
+    virtual std::string desc() const override {
+        return DESC_SUBN;
+    }
+    
+    virtual std::string arg() const override {
+        return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
+    }
+
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class ShiftRightInst: public InstTrait<ShiftRightInst> {
@@ -417,29 +439,7 @@ public:
         return fmt("X=%s", reg(inst >> 8));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
-};
-
-class SubNReg: public InstTrait<SubNReg> {
-public:
-    static const inst_t mask = 0xF00F;
-    static const inst_t op = 0x8007;
-
-    SubNReg(inst_t inst): InstTrait<SubNReg>(inst) {}
-    
-    virtual const char* cmd() const override {
-        return CMD_SUBN;
-    }
-    
-    virtual std::string desc() const override {
-        return DESC_SUBN;
-    }
-    
-    virtual std::string arg() const override {
-        return fmt("X=%s, Y=%s", reg(inst >> 8), reg(inst >> 4));
-    }
-
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class ShiftLeftInst: public InstTrait<ShiftLeftInst> {
@@ -461,7 +461,7 @@ public:
         return fmt("X=%s", reg(inst >> 8));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class SetIndexInst: public InstTrait<SetIndexInst> {
@@ -483,7 +483,7 @@ public:
         return fmt("NNN=%s", hex(inst & 0x0FFF, 3));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class JumpOffsetInst: public InstTrait<JumpOffsetInst> {
@@ -505,7 +505,7 @@ public:
         return fmt("NNN=%s", hex(inst & 0x0FFF, 3));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class RandInst: public InstTrait<RandInst> {
@@ -527,7 +527,7 @@ public:
         return fmt("X=%s, NN=%s", reg(inst >> 8), hex(inst & 0xFF, 2));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class DisplayInst: public InstTrait<DisplayInst> {
@@ -549,7 +549,7 @@ public:
         return fmt("X=%s, Y=%s, N=%s", reg(inst >> 8), reg(inst >> 4), std::to_string(inst & 0xF));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class SkipIfKPInst: public InstTrait<SkipIfKPInst> {
@@ -571,7 +571,7 @@ public:
         return fmt("X=%s", reg(inst >> 8));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class SkipIfNotKPInst: public InstTrait<SkipIfNotKPInst> {
@@ -582,40 +582,40 @@ public:
     SkipIfNotKPInst(inst_t inst): InstTrait<SkipIfNotKPInst>(inst) {}
 
     virtual const char* cmd() const override {
-        return CMD_SKP;
+        return CMD_SKNP;
     }
     
     virtual std::string desc() const override {
-        return DESC_SKP;
+        return DESC_SKNP;
     }
     
     virtual std::string arg() const override {
         return fmt("X=%s", reg(inst >> 8));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class TimerSetVXInst: public InstTrait<TimerSetVXInst> {
 public:
     static const inst_t mask = 0xF0FF;
-    static const inst_t op = 0xF015;
+    static const inst_t op = 0xF007;
 
     TimerSetVXInst(inst_t inst): InstTrait<TimerSetVXInst>(inst) {}
     
     virtual const char* cmd() const override {
-        return CMD_TMR;
+        return CMD_LDDT;
     }
     
     virtual std::string desc() const override {
-        return DESC_TMR;
+        return DESC_LDDT;
     }
     
     virtual std::string arg() const override {
         return fmt("X=%s, NN=%s", reg(inst >> 8), hex(inst & 0xFF, 2));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 class TimerSetDelayInst: public InstTrait<TimerSetDelayInst> {
 public:
@@ -625,18 +625,18 @@ public:
     TimerSetDelayInst(inst_t inst): InstTrait<TimerSetDelayInst>(inst) {}
     
     virtual const char* cmd() const override {
-        return CMD_TMR;
+        return CMD_STDT;
     }
     
     virtual std::string desc() const override {
-        return DESC_TMR;
+        return DESC_STDT;
     }
     
     virtual std::string arg() const override {
         return fmt("X=%s, NN=%s", reg(inst >> 8), hex(inst & 0xFF, 2));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class TimerSetSoundInst: public InstTrait<TimerSetSoundInst> {
@@ -647,18 +647,133 @@ public:
     TimerSetSoundInst(inst_t inst): InstTrait<TimerSetSoundInst>(inst) {}
     
     virtual const char* cmd() const override {
-        return CMD_TMR;
+        return CMD_STST;
     }
     
     virtual std::string desc() const override {
-        return DESC_TMR;
+        return DESC_STST;
     }
     
     virtual std::string arg() const override {
         return fmt("X=%s, NN=%s", reg(inst >> 8), hex(inst & 0xFF, 2));
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
+};
+
+class AddIRegInst: public InstTrait<AddIRegInst> {
+public:
+    static const inst_t mask = 0xF0FF;
+    static const inst_t op = 0xF01E;
+    AddIRegInst(inst_t inst): InstTrait<AddIRegInst>(inst) {}
+
+    virtual const char* cmd() const override {
+        return CMD_ADD;
+    }
+    
+    virtual std::string desc() const override {
+        return DESC_ADD;
+    }
+
+    virtual std::string arg() const override {
+        return fmt("I, X=%s", reg(inst >> 8));
+    }
+
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
+};
+
+class GetKeyInst: public InstTrait<GetKeyInst> {
+public:
+    static const inst_t mask = 0xF0FF;
+    static const inst_t op = 0xF00A;
+    GetKeyInst(inst_t inst): InstTrait<GetKeyInst>(inst) {}
+    virtual const char* cmd() const override {
+        return CMD_KEY;
+    }
+
+    virtual std::string desc() const override {
+        return DESC_KEY;
+    }
+
+    virtual std::string arg() const override {
+        return fmt("X=%s", reg(inst >> 8));
+    }
+
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
+};
+
+class FontCharInst: public InstTrait<FontCharInst> {
+public:
+    static const inst_t mask = 0xF0FF;
+    static const inst_t op = 0xF029;
+    FontCharInst(inst_t inst): InstTrait<FontCharInst>(inst) {}
+    virtual const char* cmd() const override {
+        return CMD_LDF;
+    }
+    
+    virtual std::string desc() const override {
+        return DESC_LDF;
+    }
+
+    virtual std::string arg() const override {
+        return fmt("X=%s", reg(inst >> 8));
+    }
+
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
+};
+
+class BinCodedDecConvInst: public InstTrait<BinCodedDecConvInst> {
+public:
+    static const inst_t mask = 0xF0FF;
+    static const inst_t op = 0xF033;
+    BinCodedDecConvInst(inst_t inst): InstTrait<BinCodedDecConvInst>(inst) {}
+    virtual const char* cmd() const override {
+        return CMD_BCD;
+    }
+
+    virtual std::string desc() const override {
+        return DESC_BCD;
+    }
+
+    virtual std::string arg() const override {
+        return fmt("X=%s", reg(inst >> 8));
+    }
+
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
+};
+
+class StoreMemInst: public InstTrait<StoreMemInst> {
+public:
+    static const inst_t mask = 0xF0FF;
+    static const inst_t op = 0xF055;
+    StoreMemInst(inst_t inst): InstTrait<StoreMemInst>(inst) {}
+    virtual const char* cmd() const override {
+        return CMD_STR;
+    }
+    virtual std::string desc() const override {
+        return DESC_STR;
+    }
+    virtual std::string arg() const override {
+        return fmt("I, X=%s", reg(inst >> 8));
+    }
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
+};
+
+class LoadMemInst: public InstTrait<LoadMemInst> {
+public:
+    static const inst_t mask = 0xF0FF;
+    static const inst_t op = 0xF065;
+    LoadMemInst(inst_t inst): InstTrait<LoadMemInst>(inst) {}
+    virtual const char* cmd() const override {
+        return CMD_LDRM;
+    }
+    virtual std::string desc() const override {
+        return DESC_LDRM;
+    }
+    virtual std::string arg() const override {
+        return fmt("I, X=%s", reg(inst >> 8));
+    }
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 class UnknownInst: public InstTrait<UnknownInst> {
@@ -680,7 +795,7 @@ public:
         return hex(inst, 4);
     }
 
-    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
+    virtual void execute(Chip8& chip8, std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) override;
 };
 
 #endif

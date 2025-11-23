@@ -37,10 +37,10 @@ bool Chip8::loadRom(const std::string& path) {
     return true;
 }
 
-void Chip8::step(std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {
+void Chip8::step(std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown) {
     if (finished()) return;
     uint16_t opcode = (memory[pc] << 8) | memory[pc + 1];
     std::unique_ptr<Inst> inst = Chip8Parser::parse(opcode);
     pc += 2;
-    inst->execute(*this, frame_buffer, frame_width, frame_height);
+    inst->execute(*this, frame_buffer, frame_width, frame_height, keydown);
 }

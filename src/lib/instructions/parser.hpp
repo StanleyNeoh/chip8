@@ -67,9 +67,9 @@ public:
         else if (AndReg::match(op)) return std::make_unique<AndReg>(op);
         else if (XorReg::match(op)) return std::make_unique<XorReg>(op);
         else if (AddReg::match(op)) return std::make_unique<AddReg>(op);
-        else if (SubReg::match(op)) return std::make_unique<SubReg>(op);
+        else if (SubXY::match(op)) return std::make_unique<SubXY>(op);
+        else if (SubYX::match(op)) return std::make_unique<SubYX>(op);
         else if (ShiftRightInst::match(op)) return std::make_unique<ShiftRightInst>(op);
-        else if (SubNReg::match(op)) return std::make_unique<SubNReg>(op);
         else if (ShiftLeftInst::match(op)) return std::make_unique<ShiftLeftInst>(op);
         else if (SetIndexInst::match(op)) return std::make_unique<SetIndexInst>(op);
         else if (JumpOffsetInst::match(op)) return std::make_unique<JumpOffsetInst>(op);
@@ -80,6 +80,13 @@ public:
         else if (TimerSetVXInst::match(op)) return std::make_unique<TimerSetVXInst>(op);
         else if (TimerSetDelayInst::match(op)) return std::make_unique<TimerSetDelayInst>(op);
         else if (TimerSetSoundInst::match(op)) return std::make_unique<TimerSetSoundInst>(op);
+        else if (AddIRegInst::match(op)) return std::make_unique<AddIRegInst>(op);
+        else if (GetKeyInst::match(op)) return std::make_unique<GetKeyInst>(op);
+        else if (FontCharInst::match(op)) return std::make_unique<FontCharInst>(op);
+        else if (BinCodedDecConvInst::match(op)) return std::make_unique<BinCodedDecConvInst>(op);
+        else if (StoreMemInst::match(op)) return std::make_unique<StoreMemInst>(op);
+        else if (LoadMemInst::match(op)) return std::make_unique<LoadMemInst>(op);
+        else if (UnknownInst::match(op)) return std::make_unique<UnknownInst>(op);
         else return std::make_unique<UnknownInst>(op);
     }
 
