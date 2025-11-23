@@ -6,7 +6,6 @@ add_library(chip8lib STATIC
     chip8/chip8.hpp
     instructions/instructions.cpp
     instructions/instructions.hpp
-    instructions/instruction_grp.hpp
     instructions/parser.hpp
     instructions/types.hpp
     ui/ui.hpp

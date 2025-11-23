@@ -36,6 +36,26 @@ public:
     void step(std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height);
     void quit() {};
 
+    void memdump(std::ostream& os = std::cout) const {
+        os << "pc: " << std::hex << pc << ", I: " << I << ", sp: " << std::dec << static_cast<int>(sp) << "\n";
+        os << "V registers:\n";
+        for (int i = 0; i < N_REG; ++i) {
+            os << "V" << std::hex << i << ": " << std::hex << static_cast<int>(V[i]) << " ";
+        }
+        os << "\n";
+        os << "Memory Dump:\n";
+        for (size_t i = 0; i < MEM_SIZE; i += 16) {
+            os << std::hex << (i) << ": ";
+            for (size_t j = 0; j < 16; ++j) {
+                if (i + j < MEM_SIZE) {
+                    os << std::hex << static_cast<int>(memory[i + j]) << " ";
+                }
+            }
+            os << "\n";
+        }
+        os << std::dec << std::endl;
+    }
+
     friend class Inst;
 };
 

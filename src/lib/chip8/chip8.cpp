@@ -4,6 +4,7 @@
 #include <fstream>
 #include "../instructions/parser.hpp"
 #include "chip8.hpp"
+#include "../utils/format.hpp"
 
 void Chip8::setFont() {
     static const uint8_t fontset[80] = {
@@ -39,8 +40,7 @@ bool Chip8::loadRom(const std::string& path) {
 void Chip8::step(std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height) {
     if (finished()) return;
     uint16_t opcode = (memory[pc] << 8) | memory[pc + 1];
-    pc += 2;
-
     std::unique_ptr<Inst> inst = Chip8Parser::parse(opcode);
+    pc += 2;
     inst->execute(*this, frame_buffer, frame_width, frame_height);
 }

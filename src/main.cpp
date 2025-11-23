@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    UI& ui = UI::create("Chip8", 64, 32, 8, chip8);
+    UI& ui = UI::create("Chip8", 64, 32, chip8);
     ui.run();
     return 0;
 }
