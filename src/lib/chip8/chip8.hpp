@@ -25,6 +25,7 @@ private:
     uint8_t sound = 0;
     uint8_t V[N_REG]{}; // V0..VF
     uint16_t rom_end = MEM_START;
+    size_t tick = 0;
 
 public:
     Chip8() { setFont(); }
@@ -35,6 +36,7 @@ public:
     };
     void step(std::vector<uint32_t>& frame_buffer, int frame_width, int frame_height, uint16_t keydown);
     void quit() {};
+    bool is_beeping() const { return sound > 0; }
 
     void memdump(std::ostream& os = std::cout) const {
         os << "pc: " << std::hex << pc << ", I: " << I << ", sp: " << std::dec << static_cast<int>(sp) << "\n";

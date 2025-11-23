@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdint>
 #include <optional>
+#include <iostream>
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 #include "../chip8/chip8.hpp"
@@ -27,12 +28,30 @@ private:
     SDL_Window* sdl_window = nullptr;
     SDL_Renderer* sdl_renderer = nullptr;
     SDL_Texture* sdl_texture = nullptr;
+    SDL_AudioStream* sdl_audio_stream = nullptr;
     Chip8* chip8 = nullptr;
 
+    size_t tick = 0;
     int width = 0;
     int height = 0;
     int run_n_steps = 0;
     uint16_t keydown = 0x0000;
+    
+    static void audio_callback(void* userdata, SDL_AudioStream* stream, int additional_amount, int total_amount) {
+        const int sample_rate = 48000;
+        const int freq = 440;
+        static int phase = 0;
+        
+        int samples_needed = additional_amount / sizeof(int16_t);
+        std::vector<int16_t> buffer(samples_needed);
+        
+        for (int i = 0; i < samples_needed; i++) {
+            buffer[i] = (phase < sample_rate / freq / 2) ? 3000 : -3000;
+            phase = (phase + 1) % (sample_rate / freq);
+        }
+        
+        SDL_PutAudioStreamData(stream, buffer.data(), samples_needed * sizeof(int16_t));
+    }
 
 public:
     UI(const UI&) = delete;
@@ -45,13 +64,28 @@ public:
         sdl_window = SDL_CreateWindow(title, w, h, 0);
         sdl_renderer = SDL_CreateRenderer(sdl_window, NULL);
         sdl_texture = SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_ABGR8888, SDL_TEXTUREACCESS_STREAMING, w, h);
+        
         if (!sdl_window || !sdl_renderer || !sdl_texture) {
             throw std::runtime_error("Failed to create SDL window, renderer, or texture");
         }
+        
+        // Try to initialize audio (optional)
+        if (SDL_InitSubSystem(SDL_INIT_AUDIO) == 0) {
+            SDL_AudioSpec spec;
+            spec.freq = 48000;
+            spec.format = SDL_AUDIO_S16;
+            spec.channels = 1;
+            sdl_audio_stream = SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec, audio_callback, this);
+            if (!sdl_audio_stream) {
+                std::cerr << "Warning: Failed to initialize audio\n";
+            }
+        }
+        
         frame_buffer.assign(static_cast<size_t>(width) * height, 0xFF000000u);
     }
 
     ~UI() {
+        if (sdl_audio_stream) SDL_DestroyAudioStream(sdl_audio_stream);
         if (sdl_texture) SDL_DestroyTexture(sdl_texture);
         if (sdl_renderer) SDL_DestroyRenderer(sdl_renderer);
         if (sdl_window) SDL_DestroyWindow(sdl_window);
@@ -128,10 +162,21 @@ public:
             }
         }
         if (run_n_steps != 0) {
+            tick++;
             chip8->step(frame_buffer, width, height, keydown);
             run_n_steps -= run_n_steps > 0;
         }
-        SDL_Delay(1); // Prevent CPU hogging
+        
+        // Control sound (only if audio is available)
+        if (sdl_audio_stream) {
+            if (chip8->is_beeping() && !SDL_GetAudioStreamAvailable(sdl_audio_stream)) {
+                SDL_ResumeAudioStreamDevice(sdl_audio_stream);
+            } else if (!chip8->is_beeping()) {
+                SDL_PauseAudioStreamDevice(sdl_audio_stream);
+            }
+        }
+        
+        SDL_Delay(1); // Prevent CPU hogging 1000Hz
         return true;
     }
 
